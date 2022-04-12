@@ -22,8 +22,8 @@ torch.manual_seed(0)
 
 
 def get_inputs():
-    parser = argparse.ArgumentParser(description='Find Phone Trainer',usage='\t\t\tpython %(prog)s -f "~/find_phone/"',)
-    parser.add_argument('-f', type=str,nargs='?', default="~/find_phone/", help="The Path containing the photos and labels")
+    parser = argparse.ArgumentParser(description='Find Phone',usage='\t\t\tpython %(prog)s -f ./find_phone/51.jpg',)
+    parser.add_argument('-f', type=str,nargs='?', default="./find_phone/51.jpg", help="The Path containing the photos and labels")
     
     
     args = parser.parse_args()
@@ -31,6 +31,30 @@ def get_inputs():
     
     return [path]
 
+class network_1v2(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.cnn = nn.Sequential(
+          Conv2d(3,16,5),
+          nn.ReLU(),
+          nn.MaxPool2d(2,2),
+          Conv2d(16,32,5),
+          nn.ReLU(),
+          nn.MaxPool2d(2,2),
+        )
+        self.dense = nn.Sequential(
+          nn.Linear(32*29*29,10000),
+          nn.ReLU(),
+          nn.Linear(10000,1000),
+          nn.ReLU(),
+          nn.Linear(1000,100),
+          nn.ReLU(),
+          nn.Linear(100,2)
+        )
+        
+    def forward(self, x):
+      output = self.dense(torch.flatten(self.cnn(x),1))
+      return output
 
 
 if __name__=="__main__":

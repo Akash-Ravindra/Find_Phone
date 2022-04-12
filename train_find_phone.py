@@ -2,6 +2,7 @@ import cv2 as cv
 import numpy
 import argparse
 import torch
+torch.cuda.empty_cache()
 import torchvision
 import torchvision.transforms as transforms
 import torch.nn.functional as F
@@ -20,13 +21,12 @@ from tqdm import tqdm
 torch.manual_seed(0)
 
 def get_inputs():
-    parser = argparse.ArgumentParser(description='Find Phone Trainer',usage='\t\t\tpython %(prog)s -f "~/find_phone/"',)
+    parser = argparse.ArgumentParser(description='Find Phone Trainer',usage='\t\t\tpython %(prog)s -f ./find_phone/',)
     parser.add_argument('-f', type=str,nargs='?', default="./find_phone/", help="The Path containing the photos and labels")
     
     
     args = parser.parse_args()
     path = args.f
-    
     return [path]
 
 def read_labels(path):
@@ -69,10 +69,11 @@ class network_1v2(nn.Module):
 
 class find_phone_dataset(torch.utils.data.Dataset):
 
-  def __init__(self, split="train", images_dict={}, ids=[]):
+  def __init__(self, split="train", images_dict={}, ids=[],path='./find_phone/'):
     self.split = split
     self.images_dict = images_dict
     self.ids = ids
+    self.path = path
 
   def __getitem__(self, index):
     transformer = transforms.Compose([
@@ -81,7 +82,7 @@ class find_phone_dataset(torch.utils.data.Dataset):
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
             ])
     id = self.ids[index]
-    img1 = Image.open('./Find_Phone/find_phone/'+self.images_dict[id][0])
+    img1 = Image.open(self.path+self.images_dict[id][0])
     img = transformer(img1)
     label = torch.FloatTensor(self.images_dict[id][1:])
     return img, label
@@ -124,7 +125,7 @@ if __name__=="__main__":
     path = get_inputs()
     img_dict, train_ids = read_labels(path[0])
     batch_size = 10
-    train_dataset = find_phone_dataset(images_dict=img_dict, ids=train_ids)
+    train_dataset = find_phone_dataset(images_dict=img_dict, ids=train_ids,path=path[0])
     train_dataloader = torch.utils.data.DataLoader(train_dataset, shuffle=True, batch_size=batch_size)
     start_time = time.time()
     num_epoch = 20
